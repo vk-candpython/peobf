@@ -1,5 +1,6 @@
 # 👾 peldr
 
+
 <div align="center">
 
 [![Platform](https://img.shields.io/badge/platform-Windows-blue?logo=windows&logoColor=white)](https://www.microsoft.com/en-us/windows)
@@ -24,6 +25,7 @@
   - [✨ Features](#-features)
   - [🔒 Complete Packing Pipeline](#-complete-packing-pipeline)
   - [🚀 Quick Start](#-quick-start)
+  - [⚙️ Build-time Configuration Flags](#️-build-time-configuration-flags)
   - [⚙️ Deep Technical Analysis](#️-deep-technical-analysis)
   - [📁 Output](#-output)
   - [⚠️ Requirements](#️-requirements)
@@ -34,6 +36,7 @@
   - [✨ Возможности](#-возможности)
   - [🔒 Полный конвейер упаковки](#-полный-конвейер-упаковки)
   - [🚀 Быстрый старт](#-быстрый-старт)
+  - [⚙️ Флаги конфигурации времени сборки](#️-флаги-конфигурации-времени-сборки)
   - [⚙️ Глубокий технический анализ](#️-глубокий-технический-анализ)
   - [📁 Результат](#-результат)
   - [⚠️ Требования](#️-требования)
@@ -132,8 +135,11 @@ PHASE 5: RUNTIME (Loader Execution)
 
 ### 📥 Download
 
+You can download the pre‑built release binary from the [Releases](https://github.com/vk-candpython/peldr/releases/tag/v1.0.0) page.
+
+Or clone and build from source:
+
 ```bash
-# Clone repository
 git clone https://github.com/vk-candpython/peldr.git
 cd peldr
 ```
@@ -177,7 +183,6 @@ peldr.exe app1.exe app2.dll
 ```
 
 **Output:**
-
 ```
 [  OK  ]: Starting packing of (1) file mode(CONSOLE)
 
@@ -185,12 +190,36 @@ peldr.exe app1.exe app2.dll
 
 [  OK  ]: compressed: (142144 -> 89123) bytes  |  saved: 53021 bytes (37%)
 [  OK  ]: outfile(./peldr-myapp.exe, 123456 bytes)
-[ INFO ]: time ................. (0.015s)
+[ INFO ]: time ................. (0.013s)
 
 [ INFO ]: End processing -> C:\Users\...\myapp.exe
 
 [  OK  ]: Successfully packed of (1)
 ```
+
+## ⚙️ Build-time Configuration Flags
+
+The loader (`loader.c`) exposes several compile‑time `#define` switches that control its behaviour. They are set at the top of the source file:
+
+```c
+#define USING_ANTIDEBUG               TRUE
+#define USING_DISGUISE_AS_NTDLL       FALSE
+#define USING_ERASE_PE_SIGNATURE      FALSE
+#define USING_DYNAMIC_CODE_POLICY     FALSE
+#define USING_SIGNATURE_DLL_POLICY    FALSE
+```
+
+### Flag descriptions
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| **`USING_ANTIDEBUG`** | `TRUE` | Enables all anti‑debugging measures: `BeingDebugged` check, `ProcessDebugPort`, `ProcessDebugFlags`, thread hiding, and ETW patching. Disable only if the packed binary must be debugged. |
+| **`USING_DISGUISE_AS_NTDLL`** | `FALSE` | When `TRUE`, the loader overwrites the host image’s PE headers with those of the real `ntdll.dll`. This makes the process look like `ntdll.dll` in memory dumps and tools such as Process Hacker. |
+| **`USING_ERASE_PE_SIGNATURE`** | `FALSE` | When `TRUE`, the `MZ` and `PE` signatures of the mapped image are zeroed after loading, removing the classic DOS/NT magic bytes. |
+| **`USING_DYNAMIC_CODE_POLICY`** | `FALSE` | When `TRUE`, calls `NtSetInformationProcess` with `ProcessDynamicCodePolicy` to prohibit dynamic code generation after the payload is loaded (prevents further VirtualAlloc + RWX). |
+| **`USING_SIGNATURE_DLL_POLICY`** | `FALSE` | When `TRUE`, sets `ProcessSignaturePolicy` to restrict DLL loading to Microsoft‑signed binaries only. |
+
+**Note:** Changing these flags requires rebuilding the loader stub and re‑embedding it into the packer.
 
 ## ⚙️ Deep Technical Analysis
 
@@ -329,6 +358,12 @@ original.exe  →  peldr-original.exe
 
 ## 🚀 Быстрый старт
 
+### 📥 Загрузка
+
+Вы можете загрузить готовый бинарник со страницы [Релизов](https://github.com/vk-candpython/peldr/releases/tag/v1.0.0).
+
+Или клонируйте репозиторий и соберите из исходников:
+
 ```bash
 git clone https://github.com/vk-candpython/peldr.git
 cd peldr
@@ -340,6 +375,30 @@ g++ -m64 -static-pie ... -o peldr.exe peldr.cpp
 peldr.exe myapp.exe
 ./peldr-myapp.exe
 ```
+
+## ⚙️ Флаги конфигурации времени сборки
+
+Загрузчик (`loader.c`) содержит несколько флагов `#define`, управляющих его поведением:
+
+```c
+#define USING_ANTIDEBUG               TRUE
+#define USING_DISGUISE_AS_NTDLL       FALSE
+#define USING_ERASE_PE_SIGNATURE      FALSE
+#define USING_DYNAMIC_CODE_POLICY     FALSE
+#define USING_SIGNATURE_DLL_POLICY    FALSE
+```
+
+### Описание флагов
+
+| Флаг | По умолчанию | Описание |
+|------|--------------|----------|
+| **`USING_ANTIDEBUG`** | `TRUE` | Включает все анти‑отладочные меры: проверку `BeingDebugged`, `ProcessDebugPort`, `ProcessDebugFlags`, скрытие потока и патч ETW. Отключайте только если требуется отладка упакованного файла. |
+| **`USING_DISGUISE_AS_NTDLL`** | `FALSE` | При `TRUE` заменяет PE‑заголовки основного образа заголовками реального `ntdll.dll`, маскируя процесс под ntdll. |
+| **`USING_ERASE_PE_SIGNATURE`** | `FALSE` | При `TRUE` затирает сигнатуры `MZ` и `PE` у загруженного образа после загрузки. |
+| **`USING_DYNAMIC_CODE_POLICY`** | `FALSE` | При `TRUE` вызывает `ProcessDynamicCodePolicy`, запрещая дальнейшее создание исполняемой памяти. |
+| **`USING_SIGNATURE_DLL_POLICY`** | `FALSE` | При `TRUE` устанавливает `ProcessSignaturePolicy`, разрешая загрузку только DLL, подписанных Microsoft. |
+
+**Примечание:** Изменение флагов требует пересборки заглушки загрузчика и повторной вставки в упаковщик.
 
 ## ⚙️ Глубокий технический анализ
 
