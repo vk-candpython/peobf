@@ -190,7 +190,7 @@ peldr.exe app1.exe app2.dll
 
 [  OK  ]: compressed: (142144 -> 89123) bytes  |  saved: 53021 bytes (37%)
 [  OK  ]: outfile(./peldr-myapp.exe, 123456 bytes)
-[ INFO ]: time ................. (0.013s)
+[ INFO ]: time ................. (0.007s)
 
 [ INFO ]: End processing -> C:\Users\...\myapp.exe
 
